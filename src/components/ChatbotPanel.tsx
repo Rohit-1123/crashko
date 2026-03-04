@@ -64,7 +64,6 @@ export default function ChatbotPanel({
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🤖</span>
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             AI Recovery Plan
           </h2>
@@ -74,7 +73,16 @@ export default function ChatbotPanel({
           disabled={regenerating}
           className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
         >
-          <span className={regenerating ? "animate-spin" : ""}>🔄</span>
+          <svg
+            className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+          </svg>
           {regenerating ? "Regenerating…" : "Regenerate"}
         </button>
       </div>

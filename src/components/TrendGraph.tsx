@@ -18,10 +18,10 @@ interface TrendGraphProps {
 
 type Tab = "risk" | "recovery" | "stress";
 
-const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: "risk", label: "Risk", emoji: "🔥" },
-  { id: "recovery", label: "Recovery", emoji: "🌙" },
-  { id: "stress", label: "Stress", emoji: "⚡" },
+const TABS: { id: Tab; label: string }[] = [
+  { id: "risk", label: "Risk" },
+  { id: "recovery", label: "Recovery" },
+  { id: "stress", label: "Stress" },
 ];
 
 const TAB_META: Record<
@@ -176,7 +176,7 @@ export default function TrendGraph({ data }: TrendGraphProps) {
                   : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
-              {t.emoji} {t.label}
+              {t.label}
             </button>
           ))}
         </div>

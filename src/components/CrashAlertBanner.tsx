@@ -14,7 +14,6 @@ export default function CrashAlertBanner({
   return (
     <div className="w-full rounded-2xl border border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20">
       <div className="flex items-start gap-3">
-        <span className="text-2xl">🚨</span>
         <div>
           <p className="font-semibold text-red-700 dark:text-red-400">
             High Crash Risk Detected — {crashProbability}% probability
@@ -39,18 +38,10 @@ export default function CrashAlertBanner({
             <span className="font-medium text-red-700 dark:text-red-300">
               Immediate steps:
             </span>
-            <span className="text-red-600 dark:text-red-400">
-              💧 Hydrate now
-            </span>
-            <span className="text-red-600 dark:text-red-400">
-              😴 Sleep 7–8h tonight
-            </span>
-            <span className="text-red-600 dark:text-red-400">
-              📵 30-min screen break
-            </span>
-            <span className="text-red-600 dark:text-red-400">
-              🚶 Short walk
-            </span>
+            <span className="text-red-600 dark:text-red-400">Hydrate now</span>
+            <span className="text-red-600 dark:text-red-400">Sleep 7–8h tonight</span>
+            <span className="text-red-600 dark:text-red-400">30-min screen break</span>
+            <span className="text-red-600 dark:text-red-400">Short walk</span>
           </div>
         </div>
       </div>

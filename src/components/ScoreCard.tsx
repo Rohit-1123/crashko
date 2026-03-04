@@ -13,7 +13,6 @@ const riskConfig = {
     badge:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
     score: "text-emerald-600 dark:text-emerald-400",
-    icon: "✅",
   },
   "At Risk": {
     bg: "from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20",
@@ -21,14 +20,12 @@ const riskConfig = {
     badge:
       "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
     score: "text-amber-600 dark:text-amber-400",
-    icon: "⚠️",
   },
   "High Risk": {
     bg: "from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20",
     border: "border-red-200 dark:border-red-700",
     badge: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
     score: "text-red-600 dark:text-red-400",
-    icon: "🔥",
   },
 };
 
@@ -53,9 +50,8 @@ export default function ScoreCard({ result }: ScoreCardProps) {
           </div>
         </div>
 
-        {/* Risk badge + icon */}
+        {/* Risk badge */}
         <div className="flex flex-col items-end gap-2">
-          <span className="text-3xl">{cfg.icon}</span>
           <span
             className={`rounded-full px-3 py-1 text-sm font-semibold ${cfg.badge}`}
           >

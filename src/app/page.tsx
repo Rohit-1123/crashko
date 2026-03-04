@@ -33,21 +33,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      {/* Nav */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">💥</span>
-            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Crashko
-            </span>
-          </div>
-          <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-600 ring-1 ring-sky-200 dark:bg-sky-900/20 dark:text-sky-400 dark:ring-sky-800">
-            Burnout Predictor
-          </span>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-5xl px-4 py-8">
         {/* Hero */}
         <div className="mb-8 text-center">
@@ -62,7 +47,7 @@ export default function Home() {
         {/* Error */}
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400">
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
