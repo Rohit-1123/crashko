@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
@@ -166,12 +166,13 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/login"
+                <button
+                  type="button"
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
                   className="rounded-lg bg-sky-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-sky-600"
                 >
                   Sign in with Google
-                </Link>
+                </button>
               )}
             </div>
           )}
@@ -261,13 +262,16 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div className="px-1 py-2">
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="block rounded-lg bg-sky-500 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-sky-600"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      signIn("google", { callbackUrl: "/" });
+                    }}
+                    className="block w-full rounded-lg bg-sky-500 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-sky-600"
                   >
                     Sign in with Google
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
