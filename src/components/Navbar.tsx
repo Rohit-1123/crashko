@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 
 const NAV_LINKS = [
@@ -12,10 +13,55 @@ const NAV_LINKS = [
   { href: "/settings", label: "Settings" },
 ];
 
+function Avatar({ src, name }: { src?: string | null; name?: string | null }) {
+  const initials = name
+    ? name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "?";
+
+  if (src) {
+    return (
+      <Image
+        src={src}
+        alt={name ?? "User"}
+        width={32}
+        height={32}
+        className="h-8 w-8 rounded-full object-cover ring-2 ring-white dark:ring-slate-800"
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-xs font-semibold text-white ring-2 ring-white dark:ring-slate-800">
+      {initials}
+    </span>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -52,20 +98,70 @@ export default function Navbar() {
           </nav>
 
           {status !== "loading" && (
-            <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-3 dark:border-slate-700">
+            <div className="ml-2 border-l border-slate-200 pl-3 dark:border-slate-700">
               {session ? (
-                <>
-                  <span className="max-w-35 truncate text-xs text-slate-500 dark:text-slate-400">
-                    {session.user?.email}
-                  </span>
+                <div className="relative" ref={dropdownRef}>
                   <button
                     type="button"
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                    onClick={() => setDropdownOpen((v) => !v)}
+                    className="flex items-center rounded-full transition hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                    aria-label="Account menu"
+                    aria-expanded={dropdownOpen}
                   >
-                    Sign out
+                    <Avatar
+                      src={session.user?.image}
+                      name={session.user?.name}
+                    />
                   </button>
-                </>
+
+                  {dropdownOpen && (
+                    <div className="absolute right-0 top-10 z-50 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                        <Avatar
+                          src={session.user?.image}
+                          name={session.user?.name}
+                        />
+                        <div className="min-w-0">
+                          {session.user?.name && (
+                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                              {session.user.name}
+                            </p>
+                          )}
+                          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                            {session.user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            signOut({ callbackUrl: "/login" });
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                        >
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                          </svg>
+                          Sign out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link
                   href="/login"
@@ -131,18 +227,46 @@ export default function Navbar() {
           {status !== "loading" && (
             <div className="mt-2 border-t border-slate-100 pt-2 dark:border-slate-800">
               {session ? (
-                <div className="flex items-center justify-between px-3 py-2">
-                  <span className="max-w-50 truncate text-xs text-slate-500 dark:text-slate-400">
-                    {session.user?.email}
-                  </span>
+                <div className="px-3 py-2">
+                  <div className="flex items-center gap-3 pb-2">
+                    <Avatar
+                      src={session.user?.image}
+                      name={session.user?.name}
+                    />
+                    <div className="min-w-0">
+                      {session.user?.name && (
+                        <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                          {session.user.name}
+                        </p>
+                      )}
+                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {session.user?.email}
+                      </p>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
                       setOpen(false);
                       signOut({ callbackUrl: "/login" });
                     }}
-                    className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
                     Sign out
                   </button>
                 </div>
