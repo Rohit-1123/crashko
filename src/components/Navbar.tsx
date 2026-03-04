@@ -42,6 +42,24 @@ function Avatar({ src, name }: { src?: string | null; name?: string | null }) {
   );
 }
 
+const SignOutIcon = () => (
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -49,7 +67,9 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
-  // Close dropdown on outside click
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (
@@ -62,9 +82,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
-
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
@@ -141,21 +158,7 @@ export default function Navbar() {
                           }}
                           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                         >
-                          <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <polyline points="16 17 21 12 16 7" />
-                            <line x1="21" y1="12" x2="9" y2="12" />
-                          </svg>
+                          <SignOutIcon />
                           Sign out
                         </button>
                       </div>
@@ -228,7 +231,7 @@ export default function Navbar() {
             <div className="mt-2 border-t border-slate-100 pt-2 dark:border-slate-800">
               {session ? (
                 <div className="px-3 py-2">
-                  <div className="flex items-center gap-3 pb-2">
+                  <div className="flex items-center gap-3 pb-3">
                     <Avatar
                       src={session.user?.image}
                       name={session.user?.name}
@@ -252,21 +255,7 @@ export default function Navbar() {
                     }}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                      <polyline points="16 17 21 12 16 7" />
-                      <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
+                    <SignOutIcon />
                     Sign out
                   </button>
                 </div>
