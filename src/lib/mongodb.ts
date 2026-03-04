@@ -34,9 +34,22 @@ export async function connectToMongo(): Promise<typeof mongoose | null> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(uri, { bufferCommands: false });
+    cached.promise = mongoose.connect(uri, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000, // fail fast instead of default 30s
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
+    });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (err) {
+    // Reset so the next request retries rather than hanging forever
+    cached.promise = null;
+    cached.conn = null;
+    console.error("[mongodb] Connection failed:", err);
+    return null;
+  }
 }
