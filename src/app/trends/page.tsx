@@ -113,13 +113,7 @@ export default function TrendsPage() {
                 label="Avg Sleep"
                 value={avgSleep}
                 suffix="h"
-                sub={
-                  avgSleep < 6
-                    ? "Low"
-                    : avgSleep >= 7
-                      ? "Good"
-                      : "Okay"
-                }
+                sub={avgSleep < 6 ? "Low" : avgSleep >= 7 ? "Good" : "Okay"}
               />
               <StatCard label="Avg Stress" value={avgStress} suffix="/10" />
               <StatCard label="Avg Crash %" value={avgCrash} suffix="%" />

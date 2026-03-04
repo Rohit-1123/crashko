@@ -39,8 +39,12 @@ export default function CrashAlertBanner({
               Immediate steps:
             </span>
             <span className="text-red-600 dark:text-red-400">Hydrate now</span>
-            <span className="text-red-600 dark:text-red-400">Sleep 7–8h tonight</span>
-            <span className="text-red-600 dark:text-red-400">30-min screen break</span>
+            <span className="text-red-600 dark:text-red-400">
+              Sleep 7–8h tonight
+            </span>
+            <span className="text-red-600 dark:text-red-400">
+              30-min screen break
+            </span>
             <span className="text-red-600 dark:text-red-400">Short walk</span>
           </div>
         </div>

@@ -105,9 +105,21 @@ export default function SettingsPage() {
           <Section title="Navigation">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { href: "/", label: "Dashboard", desc: "Log your day & get score" },
-                { href: "/trends", label: "Trends", desc: "Charts & stat summaries" },
-                { href: "/history", label: "History", desc: "All your past logs" },
+                {
+                  href: "/",
+                  label: "Dashboard",
+                  desc: "Log your day & get score",
+                },
+                {
+                  href: "/trends",
+                  label: "Trends",
+                  desc: "Charts & stat summaries",
+                },
+                {
+                  href: "/history",
+                  label: "History",
+                  desc: "All your past logs",
+                },
               ].map((l) => (
                 <Link
                   key={l.href}
