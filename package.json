@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "doppler run -- next dev",
+    "dev:local": "next dev",
+    "build": "doppler run -- next build",
+    "build:local": "next build",
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write"
