@@ -3,23 +3,22 @@
 import { useState } from "react";
 import type { GroqAIResponse, BurnoutResult } from "@/types";
 import type { GroqCallInput } from "@/lib/groqClient";
+import { RefreshCw, BrainCircuit } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ChatbotPanelProps {
   ai: GroqAIResponse;
   context: BurnoutResult & {
-    sleepHours: number;
-    studyHours: number;
-    stressLevel: number;
+    sleepHours:    number;
+    studyHours:    number;
+    stressLevel:   number;
     deadlinesSoon: number;
-    tasksPending: number;
+    tasksPending:  number;
   };
 }
 
-export default function ChatbotPanel({
-  ai: initialAI,
-  context,
-}: ChatbotPanelProps) {
-  const [ai, setAI] = useState<GroqAIResponse>(initialAI);
+export default function ChatbotPanel({ ai: initialAI, context }: ChatbotPanelProps) {
+  const [ai, setAI]                   = useState<GroqAIResponse>(initialAI);
   const [regenerating, setRegenerating] = useState(false);
   const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
 
@@ -60,127 +59,170 @@ export default function ChatbotPanel({
   const tags = Array.isArray(ai.tags) ? ai.tags : [];
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <div
+      className="w-full h-full rounded-2xl p-6"
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.09)",
+      }}
+    >
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            AI Recovery Plan
-          </h2>
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{
+              background: "linear-gradient(135deg, rgba(6,214,208,0.2), rgba(167,139,250,0.2))",
+              border: "1px solid rgba(167,139,250,0.2)",
+            }}
+          >
+            <BrainCircuit size={16} className="text-violet-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-white">AI Recovery Plan</h2>
         </div>
+
         <button
           onClick={handleRegenerate}
           disabled={regenerating}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-300 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
         >
-          <svg
-            className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-          </svg>
+          <RefreshCw size={12} className={regenerating ? "animate-spin" : ""} />
           {regenerating ? "Regenerating…" : "Regenerate"}
         </button>
       </div>
 
-      {/* Diagnosis */}
-      <div className="mb-4 rounded-xl bg-sky-50 px-4 py-3 dark:bg-sky-900/20">
-        <p className="text-xs font-semibold uppercase tracking-widest text-sky-500">
-          Diagnosis
-        </p>
-        <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-          {ai.shortDiagnosis || "No diagnosis available."}
-        </p>
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={ai.shortDiagnosis ?? "content"}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-4"
+        >
+          {/* Diagnosis */}
+          <div
+            className="rounded-xl px-4 py-3"
+            style={{
+              background: "linear-gradient(135deg, rgba(6,214,208,0.08), rgba(129,140,248,0.08))",
+              border: "1px solid rgba(6,214,208,0.15)",
+            }}
+          >
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-cyan-400">
+              Diagnosis
+            </p>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              {ai.shortDiagnosis || "No diagnosis available."}
+            </p>
+          </div>
 
-      {/* Recovery Plan */}
-      {recoveryPlan.length > 0 && (
-        <div className="mb-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Next 24h Plan
-          </p>
-          <ul className="space-y-2">
-            {recoveryPlan.map((step, i) => (
-              <li
-                key={i}
-                onClick={() => toggleStep(i)}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition-all ${
-                  checkedSteps.has(i)
-                    ? "border-emerald-200 bg-emerald-50 text-slateald-400 line-through dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-slate-500"
-                    : "border-slate-100 bg-slate-50 text-slate-700 hover:border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                }`}
-              >
-                <span
-                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                    checkedSteps.has(i)
-                      ? "border-emerald-400 bg-emerald-400"
-                      : "border-slate-300 dark:border-slate-500"
-                  }`}
-                >
-                  {checkedSteps.has(i) && (
-                    <svg
-                      className="h-2.5 w-2.5 text-white"
-                      viewBox="0 0 10 10"
-                      fill="currentColor"
+          {/* Recovery Plan checklist */}
+          {recoveryPlan.length > 0 && (
+            <div>
+              <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Next 24h Plan
+              </p>
+              <ul className="space-y-2">
+                {recoveryPlan.map((step, i) => (
+                  <li
+                    key={i}
+                    onClick={() => toggleStep(i)}
+                    className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 text-sm transition-all"
+                    style={{
+                      background: checkedSteps.has(i)
+                        ? "rgba(16,185,129,0.08)"
+                        : "rgba(255,255,255,0.04)",
+                      border: checkedSteps.has(i)
+                        ? "1px solid rgba(16,185,129,0.2)"
+                        : "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    {/* Checkbox circle */}
+                    <span
+                      className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-all"
+                      style={{
+                        borderColor: checkedSteps.has(i) ? "#10b981" : "rgba(255,255,255,0.2)",
+                        background:  checkedSteps.has(i) ? "#10b981" : "transparent",
+                      }}
                     >
-                      <path
-                        d="M2 5l2.5 2.5L8 3"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </span>
-                <span className={checkedSteps.has(i) ? "line-through" : ""}>
-                  {step}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                      {checkedSteps.has(i) && (
+                        <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="currentColor">
+                          <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </span>
+                    <span
+                      className={`leading-relaxed transition-all ${
+                        checkedSteps.has(i) ? "line-through text-slate-500" : "text-slate-300"
+                      }`}
+                    >
+                      {step}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      {/* Study Restructuring */}
-      {ai.studyRestructuring && (
-        <div className="mb-4 rounded-xl bg-violet-50 px-4 py-3 dark:bg-violet-900/20">
-          <p className="text-xs font-semibold uppercase tracking-widest text-violet-500">
-            Study Restructuring
-          </p>
-          <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-            {ai.studyRestructuring}
-          </p>
-        </div>
-      )}
-
-      {/* Motivational line */}
-      {ai.oneMotivationalLine && (
-        <div className="mb-4 border-l-4 border-sky-300 pl-3">
-          <p className="text-sm italic text-slate-500 dark:text-slate-400">
-            "{ai.oneMotivationalLine}"
-          </p>
-        </div>
-      )}
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+          {/* Study Restructuring */}
+          {ai.studyRestructuring && (
+            <div
+              className="rounded-xl px-4 py-3"
+              style={{
+                background: "rgba(167,139,250,0.07)",
+                border: "1px solid rgba(167,139,250,0.15)",
+              }}
             >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
+              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-violet-400">
+                Study Restructuring
+              </p>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {ai.studyRestructuring}
+              </p>
+            </div>
+          )}
+
+          {/* Motivational line */}
+          {ai.oneMotivationalLine && (
+            <div
+              className="rounded-xl px-4 py-3"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                borderLeft: "3px solid rgba(6,214,208,0.5)",
+              }}
+            >
+              <p className="text-sm italic text-slate-400 leading-relaxed">
+                &ldquo;{ai.oneMotivationalLine}&rdquo;
+              </p>
+            </div>
+          )}
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full px-2.5 py-0.5 text-xs"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    color: "#64748b",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

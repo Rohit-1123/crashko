@@ -5,22 +5,36 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Github, Linkedin, LogOut, Code2, ChevronDown } from "lucide-react";
 
-const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/trends", label: "Trends" },
-  { href: "/history", label: "History" },
-  { href: "/settings", label: "Settings" },
+/* ── Developer info ─────────────────────────────────────────── */
+const DEVELOPERS = [
+  {
+    name: "Yatin Annam",
+    role: "Full-Stack Dev",
+    github: "https://github.com/yatinannam",
+    linkedin: "https://linkedin.com/in/yatinannam",
+  },
+  {
+    name: "Enugula Rohit",
+    role: "Full-Stack Dev",
+    github: "https://github.com/rohit-1123",
+    linkedin: "https://www.linkedin.com/in/enugula-rohit",
+  },
 ];
 
+const NAV_LINKS = [
+  { href: "/",         label: "Dashboard" },
+  { href: "/trends",   label: "Trends"    },
+  { href: "/history",  label: "History"   },
+  { href: "/settings", label: "Settings"  },
+];
+
+/* ── Avatar ─────────────────────────────────────────────────── */
 function Avatar({ src, name }: { src?: string | null; name?: string | null }) {
   const initials = name
-    ? name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
+    ? name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "?";
 
   if (src) {
@@ -30,162 +44,263 @@ function Avatar({ src, name }: { src?: string | null; name?: string | null }) {
         alt={name ?? "User"}
         width={32}
         height={32}
-        className="h-8 w-8 rounded-full object-cover ring-2 ring-white dark:ring-slate-800"
+        className="h-8 w-8 rounded-full object-cover ring-2 ring-white/10"
         referrerPolicy="no-referrer"
       />
     );
   }
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-xs font-semibold text-white ring-2 ring-white dark:ring-slate-800">
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-xs font-semibold text-white ring-2 ring-white/10">
       {initials}
     </span>
   );
 }
 
-const SignOutIcon = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-);
+/* ── Dropdown panel shell ────────────────────────────────────── */
+function DropPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0,  scale: 1    }}
+      exit ={{ opacity: 0, y: -6, scale: 0.97 }}
+      transition={{ duration: 0.16, ease: "easeOut" }}
+      className="absolute right-0 top-11 z-50 overflow-hidden rounded-2xl shadow-2xl"
+      style={{
+        background:    "rgba(12, 15, 26, 0.97)",
+        border:        "1px solid rgba(255,255,255,0.10)",
+        backdropFilter:"blur(24px)",
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const { data: session, status } = useSession();
+  const [mobileOpen,  setMobileOpen]  = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [devOpen,     setDevOpen]     = useState(false);
+  const [logoShake,   setLogoShake]   = useState(false);
 
-  const [logoShake, setLogoShake] = useState(false);
+  const authAreaRef = useRef<HTMLDivElement>(null);
+  const { data: session, status } = useSession();
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const handleLogoClick = () => {
     setLogoShake(false);
-    // Force reflow so re-clicking restarts the animation
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setLogoShake(true));
-    });
+    requestAnimationFrame(() => requestAnimationFrame(() => setLogoShake(true)));
   };
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
+    const handleClick = (e: MouseEvent) => {
+      if (authAreaRef.current && !authAreaRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+        setDevOpen(false);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        {/* Logo */}
+    <header
+      className="sticky top-0 z-50"
+      style={{
+        background:           "rgba(5, 7, 15, 0.80)",
+        backdropFilter:       "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderBottom:         "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+
+        {/* ── Logo ──────────────────────────────────────────── */}
         <Link
           href="/"
-          className="flex items-center gap-2"
           onClick={handleLogoClick}
           onAnimationEnd={() => setLogoShake(false)}
+          className="flex items-center gap-2"
         >
           <span
-            className={`text-2xl font-extrabold tracking-tight text-slate-900 transition-all duration-200 hover:text-sky-500 hover:drop-shadow-[0_0_14px_rgba(14,165,233,0.65)] dark:text-white dark:hover:text-sky-400 dark:hover:drop-shadow-[0_0_14px_rgba(56,189,248,0.7)]${
-              logoShake ? " logo-shake" : ""
-            }`}
+            className={`text-2xl font-extrabold tracking-tight gradient-text${logoShake ? " logo-shake" : ""}`}
           >
             Crashko
           </span>
         </Link>
 
-        {/* Desktop nav + auth */}
+        {/* ── Desktop ───────────────────────────────────────── */}
         <div className="hidden items-center gap-1 sm:flex">
-          <nav className="flex items-center gap-1">
+
+          {/* Nav links */}
+          <nav className="flex items-center gap-0.5">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive(link.href)
-                    ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                className={`relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
+                  isActive(link.href) ? "text-white" : "text-slate-400 hover:text-white"
                 }`}
               >
-                {link.label}
+                {isActive(link.href) && (
+                  <motion.span
+                    layoutId="activeNav"
+                    className="absolute inset-0 rounded-lg"
+                    style={{ background: "rgba(255,255,255,0.08)" }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{link.label}</span>
               </Link>
             ))}
           </nav>
 
+          {/* Auth area */}
           {status !== "loading" && (
-            <div className="ml-2 border-l border-slate-200 pl-3 dark:border-slate-700">
+            <div
+              ref={authAreaRef}
+              className="ml-2 flex items-center gap-2 pl-3"
+              style={{ borderLeft: "1px solid rgba(255,255,255,0.10)" }}
+            >
               {session ? (
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen((v) => !v)}
-                    className="flex items-center rounded-full transition hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                    aria-label="Account menu"
-                    aria-expanded={dropdownOpen}
-                  >
-                    <Avatar
-                      src={session.user?.image}
-                      name={session.user?.name}
-                    />
-                  </button>
+                <>
+                  {/* ── Developer button — its own dropdown ── */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setDevOpen((v) => !v); setProfileOpen(false); }}
+                      aria-label="Developer info"
+                      aria-expanded={devOpen}
+                      className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-all"
+                      style={{
+                        background: devOpen
+                          ? "rgba(167,139,250,0.15)"
+                          : "rgba(255,255,255,0.05)",
+                        border: devOpen
+                          ? "1px solid rgba(167,139,250,0.35)"
+                          : "1px solid rgba(255,255,255,0.08)",
+                        color: devOpen ? "#a78bfa" : "#94a3b8",
+                      }}
+                    >
+                      <Code2 size={13} />
+                      <span className="hidden lg:inline">Devs</span>
+                      <motion.span
+                        animate={{ rotate: devOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={11} />
+                      </motion.span>
+                    </button>
 
-                  {dropdownOpen && (
-                    <div className="absolute right-0 top-10 z-50 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
-                      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                        <Avatar
-                          src={session.user?.image}
-                          name={session.user?.name}
-                        />
-                        <div className="min-w-0">
-                          {session.user?.name && (
-                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
-                              {session.user.name}
+                    <AnimatePresence>
+                      {devOpen && (
+                        <DropPanel>
+                          <div className="w-64 p-3 space-y-2">
+                            <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-widest text-violet-400">
+                              Meet the Builders
                             </p>
-                          )}
-                          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                            {session.user?.email}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="p-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            signOut({ callbackUrl: "/login" });
-                          }}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                          <SignOutIcon />
-                          Sign out
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                            {DEVELOPERS.map((dev, i) => (
+                              <div
+                                key={i}
+                                className="rounded-xl px-3 py-3"
+                                style={{
+                                  background: "rgba(255,255,255,0.04)",
+                                  border:     "1px solid rgba(255,255,255,0.07)",
+                                }}
+                              >
+                                <p className="text-sm font-semibold text-white">{dev.name}</p>
+                                <p className="mb-2.5 text-xs text-slate-500">{dev.role}</p>
+                                <div className="flex gap-2">
+                                  <a
+                                    href={dev.github}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-white"
+                                    style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
+                                  >
+                                    <Github size={11} />
+                                    GitHub
+                                  </a>
+                                  <a
+                                    href={dev.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-blue-400"
+                                    style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
+                                  >
+                                    <Linkedin size={11} />
+                                    LinkedIn
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </DropPanel>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* ── Profile avatar — own dropdown (no dev section) ── */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setProfileOpen((v) => !v); setDevOpen(false); }}
+                      aria-label="Account menu"
+                      aria-expanded={profileOpen}
+                      className="flex items-center rounded-full p-0.5 transition hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                    >
+                      <Avatar src={session.user?.image} name={session.user?.name} />
+                    </button>
+
+                    <AnimatePresence>
+                      {profileOpen && (
+                        <DropPanel>
+                          <div className="w-56">
+                            <div
+                              className="flex items-center gap-3 px-4 py-3.5"
+                              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+                            >
+                              <Avatar src={session.user?.image} name={session.user?.name} />
+                              <div className="min-w-0">
+                                {session.user?.name && (
+                                  <p className="truncate text-sm font-semibold text-white">
+                                    {session.user.name}
+                                  </p>
+                                )}
+                                <p className="truncate text-xs text-slate-400">
+                                  {session.user?.email}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="p-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setProfileOpen(false);
+                                  signOut({ callbackUrl: "/login" });
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                              >
+                                <LogOut size={14} />
+                                Sign out
+                              </button>
+                            </div>
+                          </div>
+                        </DropPanel>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </>
               ) : (
                 <button
                   type="button"
                   onClick={() => signIn("google", { callbackUrl: "/" })}
-                  className="rounded-lg bg-sky-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-sky-600"
+                  className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90"
+                  style={{
+                    background: "linear-gradient(135deg, #06d6d0 0%, #818cf8 50%, #f472b6 100%)",
+                  }}
                 >
                   Sign in with Google
                 </button>
@@ -194,106 +309,118 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile hamburger */}
+        {/* ── Mobile hamburger ──────────────────────────────── */}
         <button
           type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 sm:hidden"
-          onClick={() => setOpen((o) => !o)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/8 hover:text-white sm:hidden"
+          onClick={() => setMobileOpen((o) => !o)}
           aria-label="Toggle menu"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            {open ? (
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-              />
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            {mobileOpen ? (
+              <path fillRule="evenodd" clipRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
             ) : (
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-              />
+              <path fillRule="evenodd" clipRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
             )}
           </svg>
         </button>
       </div>
 
-      {/* Mobile dropdown */}
-      {open && (
-        <div className="border-t border-slate-100 bg-white px-4 pb-3 dark:border-slate-800 dark:bg-slate-900 sm:hidden">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive(link.href)
-                  ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+      {/* ── Mobile menu ──────────────────────────────────────── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit ={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden sm:hidden"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            <div className="px-3 pb-4 pt-2">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive(link.href)
+                      ? "bg-white/8 text-white"
+                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
 
-          {/* Mobile auth */}
-          {status !== "loading" && (
-            <div className="mt-2 border-t border-slate-100 pt-2 dark:border-slate-800">
-              {session ? (
-                <div className="px-3 py-2">
-                  <div className="flex items-center gap-3 pb-3">
-                    <Avatar
-                      src={session.user?.image}
-                      name={session.user?.name}
-                    />
-                    <div className="min-w-0">
-                      {session.user?.name && (
-                        <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
-                          {session.user.name}
+              {status !== "loading" && (
+                <div
+                  className="mt-3 space-y-2 pt-3"
+                  style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  {session ? (
+                    <>
+                      <div className="flex items-center gap-3 px-3 pb-1">
+                        <Avatar src={session.user?.image} name={session.user?.name} />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-white">
+                            {session.user?.name}
+                          </p>
+                          <p className="truncate text-xs text-slate-400">
+                            {session.user?.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className="rounded-xl p-3 space-y-2"
+                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-2">
+                          Developers
                         </p>
-                      )}
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {session.user?.email}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      signOut({ callbackUrl: "/login" });
-                    }}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                  >
-                    <SignOutIcon />
-                    Sign out
-                  </button>
-                </div>
-              ) : (
-                <div className="px-1 py-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      signIn("google", { callbackUrl: "/" });
-                    }}
-                    className="block w-full rounded-lg bg-sky-500 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-sky-600"
-                  >
-                    Sign in with Google
-                  </button>
+                        {DEVELOPERS.map((dev, i) => (
+                          <div key={i} className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400">{dev.name}</span>
+                            <div className="flex gap-3">
+                              <a href={dev.github} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors">
+                                <Github size={13} />
+                              </a>
+                              <a href={dev.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-400 transition-colors">
+                                <Linkedin size={13} />
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/login" }); }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-400 transition hover:bg-red-500/10"
+                      >
+                        <LogOut size={14} />
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setMobileOpen(false); signIn("google", { callbackUrl: "/" }); }}
+                      className="block w-full rounded-xl px-4 py-2 text-center text-sm font-semibold text-white"
+                      style={{
+                        background: "linear-gradient(135deg, #06d6d0 0%, #818cf8 50%, #f472b6 100%)",
+                      }}
+                    >
+                      Sign in with Google
+                    </button>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

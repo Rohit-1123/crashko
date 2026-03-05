@@ -3,20 +3,78 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { LayoutDashboard, TrendingUp, Clock, Trash2 } from "lucide-react";
+
+const NAV_LINKS = [
+  { href: "/",        label: "Dashboard", desc: "Log your day and get score",     Icon: LayoutDashboard },
+  { href: "/trends",  label: "Trends",    desc: "Charts and stat summaries",      Icon: TrendingUp      },
+  { href: "/history", label: "History",   desc: "All your past burnout logs",     Icon: Clock           },
+];
+
+function GlassSection({
+  title,
+  children,
+  danger,
+  delay = 0,
+}: {
+  title:    string;
+  children: React.ReactNode;
+  danger?:  boolean;
+  delay?:   number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
+      className="rounded-2xl p-6"
+      style={{
+        background:           "rgba(255,255,255,0.04)",
+        backdropFilter:       "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: danger
+          ? "1px solid rgba(239,68,68,0.25)"
+          : "1px solid rgba(255,255,255,0.09)",
+      }}
+    >
+      <h2
+        className="mb-4 text-base font-semibold"
+        style={{ color: danger ? "#f87171" : "#f1f5f9" }}
+      >
+        {title}
+      </h2>
+      {children}
+    </motion.div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="rounded-xl px-4 py-3"
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        border:     "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-white">{value}</p>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [clearing, setClearing] = useState(false);
-  const [cleared, setCleared] = useState(false);
+  const [cleared,  setCleared]  = useState(false);
 
   useEffect(() => {
-    // Remove any legacy localStorage userId that may have been set previously
     localStorage.removeItem("crashko_user_id");
   }, []);
 
   const handleClearData = async () => {
-    if (!confirm("Delete ALL your burnout logs? This cannot be undone."))
-      return;
+    if (!confirm("Delete ALL your burnout logs? This cannot be undone.")) return;
     setClearing(true);
     try {
       await fetch("/api/history", { method: "DELETE" });
@@ -30,134 +88,90 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <main className="mx-auto max-w-2xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+    <div className="flex-1">
+      <main className="mx-auto max-w-2xl px-4 py-10">
+        {/* Page header */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
+          <h1
+            className="text-2xl font-extrabold tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #06d6d0, #a78bfa)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
             Settings
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Manage your profile and preferences
+          <p className="mt-1 text-sm text-slate-500">
+            Manage your profile and preferences.
           </p>
-        </div>
+        </motion.div>
 
         <div className="flex flex-col gap-5">
-          {/* Profile card */}
-          <Section title="Account">
+          {/* Account */}
+          <GlassSection title="Account" delay={0.05}>
             <div className="flex flex-col gap-3">
               {session?.user ? (
                 <>
-                  <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-                    <p className="text-xs text-slate-400">Name</p>
-                    <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {session.user.name ?? "—"}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-                    <p className="text-xs text-slate-400">Email</p>
-                    <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {session.user.email ?? "—"}
-                    </p>
-                  </div>
+                  <InfoRow label="Name"  value={session.user.name  ?? "—"} />
+                  <InfoRow label="Email" value={session.user.email ?? "—"} />
                 </>
               ) : (
-                <p className="text-sm text-slate-400">Not signed in.</p>
+                <p className="text-sm text-slate-500">Not signed in.</p>
               )}
             </div>
-          </Section>
+          </GlassSection>
 
-          {/* Quick links */}
-          <Section title="Navigation">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  href: "/",
-                  label: "Dashboard",
-                  desc: "Log your day & get score",
-                },
-                {
-                  href: "/trends",
-                  label: "Trends",
-                  desc: "Charts & stat summaries",
-                },
-                {
-                  href: "/history",
-                  label: "History",
-                  desc: "All your past logs",
-                },
-              ].map((l) => (
+          {/* Navigation */}
+          <GlassSection title="Navigation" delay={0.12}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {NAV_LINKS.map(({ href, label, desc, Icon }) => (
                 <Link
-                  key={l.href}
-                  href={l.href}
-                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-sky-200 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-sky-700 dark:hover:bg-sky-900/20"
+                  key={href}
+                  href={href}
+                  className="flex flex-col gap-2 rounded-xl p-4 transition-all hover:border-violet-500/30"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border:     "1px solid rgba(255,255,255,0.08)",
+                  }}
                 >
+                  <Icon size={18} className="text-violet-400" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {l.label}
-                    </p>
-                    <p className="text-xs text-slate-400">{l.desc}</p>
+                    <p className="text-sm font-semibold text-white">{label}</p>
+                    <p className="text-xs text-slate-500">{desc}</p>
                   </div>
                 </Link>
               ))}
             </div>
-          </Section>
+          </GlassSection>
 
           {/* Danger zone */}
-          <Section title="Danger Zone" danger>
-            <div>
-              <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-                Permanently delete all your burnout logs. This action cannot be
-                undone.
-              </p>
-              <button
-                type="button"
-                disabled={clearing}
-                onClick={handleClearData}
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-              >
-                {clearing
-                  ? "Deleting…"
-                  : cleared
-                    ? "All logs deleted"
-                    : "Delete All My Logs"}
-              </button>
-            </div>
-          </Section>
+          <GlassSection title="Danger Zone" danger delay={0.20}>
+            <p className="mb-4 text-sm text-slate-500 leading-relaxed">
+              Permanently delete all your burnout logs. This action cannot be undone.
+            </p>
+            <button
+              type="button"
+              disabled={clearing}
+              onClick={handleClearData}
+              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-red-400 transition-all hover:opacity-90 disabled:opacity-50"
+              style={{
+                background: "rgba(239,68,68,0.08)",
+                border:     "1px solid rgba(239,68,68,0.2)",
+              }}
+            >
+              <Trash2 size={14} />
+              {clearing ? "Deleting…" : cleared ? "All logs deleted" : "Delete All My Logs"}
+            </button>
+          </GlassSection>
         </div>
       </main>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-  danger,
-}: {
-  title: string;
-  children: React.ReactNode;
-  danger?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-2xl border bg-white p-6 shadow-sm dark:bg-slate-900 ${
-        danger
-          ? "border-red-200 dark:border-red-800"
-          : "border-slate-200 dark:border-slate-700"
-      }`}
-    >
-      <div className="mb-4">
-        <h2
-          className={`text-base font-semibold ${
-            danger
-              ? "text-red-600 dark:text-red-400"
-              : "text-slate-800 dark:text-slate-100"
-          }`}
-        >
-          {title}
-        </h2>
-      </div>
-      {children}
     </div>
   );
 }
