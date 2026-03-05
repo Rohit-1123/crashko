@@ -1,9 +1,19 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
+import { motion } from "framer-motion";
+
 interface CrashAlertBannerProps {
   crashProbability: number;
   flags: string[];
 }
+
+const IMMEDIATE_STEPS = [
+  "Hydrate now",
+  "Sleep 7–8h tonight",
+  "30-min screen break",
+  "Short walk",
+];
 
 export default function CrashAlertBanner({
   crashProbability,
@@ -12,43 +22,75 @@ export default function CrashAlertBanner({
   if (crashProbability < 65) return null;
 
   return (
-    <div className="w-full rounded-2xl border border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20">
-      <div className="flex items-start gap-3">
-        <div>
-          <p className="font-semibold text-red-700 dark:text-red-400">
-            High Crash Risk Detected — {crashProbability}% probability
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="w-full rounded-2xl p-5 glow-red"
+      style={{
+        background:           "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.06))",
+        backdropFilter:       "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border:               "1px solid rgba(239,68,68,0.3)",
+      }}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+          style={{
+            background: "rgba(239,68,68,0.15)",
+            border:     "1px solid rgba(239,68,68,0.3)",
+          }}
+        >
+          <AlertTriangle size={18} className="text-red-400" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-red-300 text-base">
+            High Crash Risk — {crashProbability}% probability
           </p>
-          <p className="mt-1 text-sm text-red-600 dark:text-red-300">
-            Your patterns suggest an imminent burnout crash. Immediate action
-            recommended.
+          <p className="mt-1 text-sm text-red-400/80 leading-relaxed">
+            Your patterns indicate an imminent burnout crash. Immediate action recommended.
           </p>
+
+          {/* Flags */}
           {flags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {flags.map((f) => (
                 <span
                   key={f}
-                  className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900/40 dark:text-red-300"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium text-red-300"
+                  style={{
+                    background: "rgba(239,68,68,0.12)",
+                    border:     "1px solid rgba(239,68,68,0.2)",
+                  }}
                 >
                   {f}
                 </span>
               ))}
             </div>
           )}
-          <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            <span className="font-medium text-red-700 dark:text-red-300">
-              Immediate steps:
+
+          {/* Immediate steps */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-red-400">
+              Immediate steps
             </span>
-            <span className="text-red-600 dark:text-red-400">Hydrate now</span>
-            <span className="text-red-600 dark:text-red-400">
-              Sleep 7–8h tonight
-            </span>
-            <span className="text-red-600 dark:text-red-400">
-              30-min screen break
-            </span>
-            <span className="text-red-600 dark:text-red-400">Short walk</span>
+            {IMMEDIATE_STEPS.map((step) => (
+              <span
+                key={step}
+                className="rounded-lg px-2.5 py-1 text-xs text-red-300"
+                style={{
+                  background: "rgba(239,68,68,0.08)",
+                  border:     "1px solid rgba(239,68,68,0.15)",
+                }}
+              >
+                {step}
+              </span>
+            ))}
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
