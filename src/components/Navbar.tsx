@@ -67,8 +67,18 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
+  const [logoShake, setLogoShake] = useState(false);
+
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const handleLogoClick = () => {
+    setLogoShake(false);
+    // Force reflow so re-clicking restarts the animation
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setLogoShake(true));
+    });
+  };
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -89,9 +99,15 @@ export default function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          className="flex items-center gap-2"
+          onClick={handleLogoClick}
+          onAnimationEnd={() => setLogoShake(false)}
         >
-          <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <span
+            className={`text-2xl font-extrabold tracking-tight text-slate-900 transition-all duration-200 hover:text-sky-500 hover:drop-shadow-[0_0_14px_rgba(14,165,233,0.65)] dark:text-white dark:hover:text-sky-400 dark:hover:drop-shadow-[0_0_14px_rgba(56,189,248,0.7)]${
+              logoShake ? " logo-shake" : ""
+            }`}
+          >
             Crashko
           </span>
         </Link>
