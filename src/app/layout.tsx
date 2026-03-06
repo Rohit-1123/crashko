@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import AuthSessionProvider from "@/components/AuthSessionProvider";
 import AuroraOrbs from "@/components/AuroraOrbs";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,6 +47,8 @@ export default function RootLayout({
             {children}
           </div>
         </AuthSessionProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
