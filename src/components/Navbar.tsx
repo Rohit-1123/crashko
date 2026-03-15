@@ -24,11 +24,17 @@ const DEVELOPERS = [
   },
 ];
 
-const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
+const APP_NAV_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/trends", label: "Trends" },
   { href: "/history", label: "History" },
   { href: "/settings", label: "Settings" },
+  { href: "/legal", label: "Privacy Policy" },
+];
+
+const PUBLIC_NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/legal", label: "Privacy Policy" },
 ];
 
 /* ── Avatar ─────────────────────────────────────────────────── */
@@ -55,7 +61,7 @@ function Avatar({ src, name }: { src?: string | null; name?: string | null }) {
     );
   }
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-xs font-semibold text-white ring-2 ring-white/10">
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-cyan-400 to-violet-500 text-xs font-semibold text-white ring-2 ring-white/10">
       {initials}
     </span>
   );
@@ -90,6 +96,8 @@ export default function Navbar() {
 
   const authAreaRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
+  const navLinks = session ? APP_NAV_LINKS : PUBLIC_NAV_LINKS;
+  const logoHref = session ? "/dashboard" : "/";
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -128,7 +136,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         {/* ── Logo ──────────────────────────────────────────── */}
         <Link
-          href="/"
+          href={logoHref}
           onClick={handleLogoClick}
           onAnimationEnd={() => setLogoShake(false)}
           className="flex items-center gap-2"
@@ -144,7 +152,7 @@ export default function Navbar() {
         <div className="hidden items-center gap-1 sm:flex">
           {/* Nav links */}
           <nav className="flex items-center gap-0.5">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -316,7 +324,7 @@ export default function Navbar() {
                                 type="button"
                                 onClick={() => {
                                   setProfileOpen(false);
-                                  signOut({ callbackUrl: "/login" });
+                                  signOut({ callbackUrl: "/" });
                                 }}
                                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
                               >
@@ -333,7 +341,9 @@ export default function Navbar() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  onClick={() =>
+                    signIn("google", { callbackUrl: "/dashboard" })
+                  }
                   className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90"
                   style={{
                     background:
@@ -390,7 +400,7 @@ export default function Navbar() {
             style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
           >
             <div className="px-3 pb-4 pt-2">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -471,7 +481,7 @@ export default function Navbar() {
                         type="button"
                         onClick={() => {
                           setMobileOpen(false);
-                          signOut({ callbackUrl: "/login" });
+                          signOut({ callbackUrl: "/" });
                         }}
                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-400 transition hover:bg-red-500/10"
                       >
@@ -484,7 +494,7 @@ export default function Navbar() {
                       type="button"
                       onClick={() => {
                         setMobileOpen(false);
-                        signIn("google", { callbackUrl: "/" });
+                        signIn("google", { callbackUrl: "/dashboard" });
                       }}
                       className="block w-full rounded-xl px-4 py-2 text-center text-sm font-semibold text-white"
                       style={{

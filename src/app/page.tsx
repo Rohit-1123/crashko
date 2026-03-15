@@ -1,246 +1,496 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useBurnoutForm } from "@/hooks/useBurnoutForm";
-import { useTrends } from "@/hooks/useTrends";
-import BurnoutForm from "@/components/BurnoutForm";
-import ScoreCard from "@/components/ScoreCard";
-import ChatbotPanel from "@/components/ChatbotPanel";
-import TrendGraph from "@/components/TrendGraph";
-import FocusModeCard from "@/components/FocusModeCard";
-import CrashAlertBanner from "@/components/CrashAlertBanner";
 import ShinyText from "@/components/ShinyText";
-import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useSession, signIn } from "next-auth/react";
+import { motion, type Variants } from "framer-motion";
+import {
+  ArrowRight,
+  ShieldCheck,
+  LineChart,
+  BrainCircuit,
+  TrendingUp,
+  Bell,
+  History,
+  ChevronDown,
+  CheckCircle2,
+} from "lucide-react";
 
-export default function Home() {
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay: i * 0.1, ease: [0.25, 0.1, 0.25, 1] },
+  }),
+};
+
+const FEATURES = [
+  {
+    icon: LineChart,
+    color: "text-cyan-400",
+    title: "Daily Risk Score",
+    desc: "Weighted scoring across sleep, stress, deadlines, and workload to surface crash risk the moment you check in.",
+  },
+  {
+    icon: BrainCircuit,
+    color: "text-violet-400",
+    title: "Consent-Based AI Plans",
+    desc: "Recovery steps are only generated when you explicitly opt in per check-in — your data, your call.",
+  },
+  {
+    icon: ShieldCheck,
+    color: "text-emerald-400",
+    title: "Privacy by Default",
+    desc: "Analytics are opt-in. Logs auto-expire. Account deletion is one click. You own your data.",
+  },
+  {
+    icon: TrendingUp,
+    color: "text-pink-400",
+    title: "Trend Tracking",
+    desc: "Visualise your risk score over 7, 14, or 30 days to catch recurring patterns before they become breakdowns.",
+  },
+  {
+    icon: Bell,
+    color: "text-amber-400",
+    title: "Crash Alerts",
+    desc: "A persistent banner surfaces anytime your risk crosses the critical threshold, so you never miss a warning.",
+  },
+  {
+    icon: History,
+    color: "text-sky-400",
+    title: "Full Check-in History",
+    desc: "Browse every past submission with date, score, and AI notes — exportable or deletable whenever you want.",
+  },
+];
+
+const STEPS = [
+  {
+    num: "01",
+    title: "Log your day",
+    desc: "Fill in a quick 5-field check-in: hours slept, study load, stress level, social interaction, and upcoming deadlines.",
+  },
+  {
+    num: "02",
+    title: "Get your risk score",
+    desc: "Our burnout engine calculates a 0–100 risk score instantly using a weighted formula built on student wellbeing research.",
+  },
+  {
+    num: "03",
+    title: "Act on it",
+    desc: "Review your score, optionally generate an AI recovery plan, and track how your habits change over time.",
+  },
+];
+
+const STATS = [
+  { stat: "67%", label: "of students experience burnout before graduation" },
+  {
+    stat: "3–5 days",
+    label: "average recovery time from a single burnout episode",
+  },
+  {
+    stat: "< 5 min",
+    label: "to complete a Crashko check-in and get your score",
+  },
+];
+
+const PRINCIPLES = [
+  "Your check-in data is never sold or shared with anyone",
+  "AI processing only runs with your explicit per-check-in consent",
+  "Analytics (Vercel) are opt-in via a banner — never silently enabled",
+  "Logs are auto-deleted after 90 days; manual deletion available anytime",
+  "Account deletion is immediate, complete, and irreversible",
+];
+
+const FAQS = [
+  {
+    q: "Is my data sold to anyone?",
+    a: "No. Your check-in data is stored only for your own history and is never shared with or sold to third parties.",
+  },
+  {
+    q: "Do I need to enable AI to use Crashko?",
+    a: "No. The risk score engine runs without AI. AI-generated recovery plans are entirely opt-in and you choose per check-in.",
+  },
+  {
+    q: "How long is my data kept?",
+    a: "Logs are automatically purged after 90 days. You can delete individual entries or your entire account anytime in Settings.",
+  },
+  {
+    q: "Is this only for students?",
+    a: "The scoring model is calibrated for student workloads, but anyone dealing with deadlines, sleep debt, or high stress can benefit.",
+  },
+];
+
+export default function LandingPage() {
   const { data: session } = useSession();
-  const userId = session?.user?.id ?? "";
-  const { loading, error, response, submitted, submitForm, lastInput, reset } =
-    useBurnoutForm(userId);
-  const {
-    data: trendData,
-    loading: trendLoading,
-    refetch: refetchTrends,
-  } = useTrends(userId, 7);
-
-  const handleSubmit = async (data: Parameters<typeof submitForm>[0]) => {
-    await submitForm(data);
-    setTimeout(() => refetchTrends(), 800);
-  };
-
-  const handleReset = () => {
-    reset();
-    refetchTrends();
+  const handleGetStarted = () => {
+    if (session?.user) {
+      window.location.href = "/dashboard";
+    } else {
+      signIn("google", { callbackUrl: "/dashboard" });
+    }
   };
 
   return (
-    <div className="flex-1">
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        {/* ── Hero ────────────────────────────────────────────── */}
+    <div className="flex-1 overflow-x-hidden">
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section className="relative mx-auto flex min-h-[90vh] max-w-5xl flex-col items-center justify-center px-4 text-center">
         <motion.div
-          className="mb-10 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={0}
+          className="mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-slate-400"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.10)",
+          }}
+        >
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+          Free for students · No credit card needed
+        </motion.div>
+
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={1}
         >
           <ShinyText
             as="h1"
-            className="mb-3 text-4xl font-extrabold tracking-tight sm:text-5xl"
+            className="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl"
           >
-            Know before you crash.
+            Predict burnout before
+            <br className="hidden sm:block" />
+            it predicts your day.
           </ShinyText>
-          <p className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed">
-            Log your day and receive your burnout score plus an AI-generated
-            recovery plan — in seconds.
+        </motion.div>
+
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={2}
+          className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg"
+        >
+          Crashko is a student wellbeing tool that scores your daily inputs,
+          tracks trends over time, and — only when you say so — generates an AI
+          recovery plan to help you bounce back before burnout hits.
+        </motion.p>
+
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={3}
+          className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:flex-row"
+        >
+          <button
+            type="button"
+            onClick={handleGetStarted}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white sm:w-auto"
+            style={{
+              background:
+                "linear-gradient(135deg, #06d6d0 0%, #818cf8 50%, #f472b6 100%)",
+            }}
+          >
+            Get Started Free
+            <ArrowRight size={15} />
+          </button>
+          <a
+            href="#how-it-works"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-slate-300 hover:text-white sm:w-auto"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
+          >
+            See how it works
+            <ChevronDown size={14} />
+          </a>
+        </motion.div>
+
+        {/* Scroll hint */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.4, duration: 0.6 }}
+          className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-slate-700"
+        >
+          <span className="text-[10px] uppercase tracking-widest">Scroll</span>
+          <ChevronDown size={13} className="animate-bounce" />
+        </motion.div>
+      </section>
+
+      {/* ── PROBLEM / STATS ───────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-4 py-24 text-center">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+        >
+          <ShinyText as="h2" className="text-2xl font-bold sm:text-4xl">
+            Burnout doesn&apos;t announce itself.
+          </ShinyText>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+            By the time you feel it, it&apos;s already cost you days of
+            productivity. Most tools tell you to &ldquo;rest more.&rdquo;
+            Crashko tells you{" "}
+            <span className="font-medium text-white">when and why</span> —
+            before the crash.
           </p>
         </motion.div>
 
-        {/* ── Error ───────────────────────────────────────────── */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 rounded-xl px-4 py-3 text-sm text-red-300"
+        <div
+          className="mt-12 grid overflow-hidden rounded-2xl sm:grid-cols-3"
+          style={{ background: "rgba(255,255,255,0.06)" }}
+        >
+          {STATS.map(({ stat, label }, i) => (
+            <motion.div
+              key={stat}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={i}
+              className="px-6 py-10"
+              style={{ background: "#05070f" }}
+            >
+              <p className="text-3xl font-extrabold text-white">{stat}</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                {label}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ──────────────────────────────────────────────── */}
+      <section id="how-it-works" className="mx-auto max-w-5xl px-4 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="text-center"
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
+            How it works
+          </p>
+          <ShinyText as="h2" className="mt-2 text-2xl font-bold sm:text-4xl">
+            Three steps. That&apos;s it.
+          </ShinyText>
+        </motion.div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {STEPS.map(({ num, title, desc }, i) => (
+            <motion.div
+              key={num}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={i}
+              className="rounded-2xl p-7"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <span className="text-5xl font-black text-slate-800">{num}</span>
+              <h3 className="mt-4 text-base font-semibold text-white">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                {desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURES ──────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-4 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="text-center"
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-violet-400">
+            Features
+          </p>
+          <ShinyText as="h2" className="mt-2 text-2xl font-bold sm:text-4xl">
+            Everything you need, nothing you don&apos;t.
+          </ShinyText>
+        </motion.div>
+
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(({ icon: Icon, color, title, desc }, i) => (
+            <motion.article
+              key={title}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={i % 3}
+              className="rounded-2xl p-6"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <Icon className={`mb-3 ${color}`} size={20} />
+              <h3 className="text-sm font-semibold text-white">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                {desc}
+              </p>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── PRINCIPLES ────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-4xl px-4 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="rounded-2xl p-8 text-center sm:p-14"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(6,214,208,0.05) 0%, rgba(129,140,248,0.07) 50%, rgba(244,114,182,0.05) 100%)",
+            border: "1px solid rgba(255,255,255,0.09)",
+          }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">
+            Our principles
+          </p>
+          <ShinyText as="h2" className="mt-2 text-2xl font-bold sm:text-3xl">
+            Built on honest foundations.
+          </ShinyText>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+            No dark patterns. No hidden data collection. No upsells. Crashko
+            exists to help students, so it earns trust by being transparent
+            about exactly what it does and doesn&apos;t do.
+          </p>
+          <ul className="mt-8 inline-flex flex-col gap-3 text-left text-sm text-slate-300">
+            {PRINCIPLES.map((item) => (
+              <li key={item} className="flex items-start gap-3">
+                <CheckCircle2
+                  className="mt-0.5 shrink-0 text-emerald-400"
+                  size={16}
+                />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8">
+            <Link
+              href="/legal"
+              className="text-xs text-slate-500 underline underline-offset-4 hover:text-slate-300"
+            >
+              Read our Privacy Policy →
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── FAQ ───────────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-3xl px-4 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="text-center"
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-pink-400">
+            FAQ
+          </p>
+          <ShinyText as="h2" className="mt-2 text-2xl font-bold sm:text-4xl">
+            Common questions.
+          </ShinyText>
+        </motion.div>
+
+        <div className="mt-10 space-y-4">
+          {FAQS.map(({ q, a }, i) => (
+            <motion.div
+              key={q}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              custom={i}
+              className="rounded-2xl px-6 py-5"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <p className="text-sm font-semibold text-white">{q}</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{a}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ─────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-4xl px-4 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+          className="rounded-3xl px-8 py-20 text-center"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(6,214,208,0.07) 0%, rgba(129,140,248,0.09) 50%, rgba(244,114,182,0.07) 100%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+          }}
+        >
+          <ShinyText as="h2" className="text-2xl font-extrabold sm:text-4xl">
+            Start before you burn out.
+          </ShinyText>
+          <p className="mx-auto mt-4 max-w-md text-sm text-slate-400 sm:text-base">
+            Takes 5 minutes. Free forever for students. No card needed.
+          </p>
+          <button
+            type="button"
+            onClick={handleGetStarted}
+            className="mt-8 inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white"
             style={{
-              background: "rgba(239,68,68,0.1)",
-              border: "1px solid rgba(239,68,68,0.25)",
+              background:
+                "linear-gradient(135deg, #06d6d0 0%, #818cf8 50%, #f472b6 100%)",
             }}
           >
-            {error}
-          </motion.div>
-        )}
+            Create your free account
+            <ArrowRight size={15} />
+          </button>
+        </motion.div>
+      </section>
 
-        {!submitted ? (
-          /* ── Input view: side-by-side ─────────────────────── */
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Today's Check-in */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                duration: 0.5,
-                delay: 0.1,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-            >
-              <BurnoutForm onSubmit={handleSubmit} loading={loading} />
-            </motion.div>
-
-            {/* 7-Day Trend */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{
-                duration: 0.5,
-                delay: 0.2,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-            >
-              {trendLoading ? (
-                <div
-                  className="flex h-full min-h-[320px] items-center justify-center rounded-2xl text-sm text-slate-500"
-                  style={{
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px dashed rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg
-                      className="h-4 w-4 animate-spin text-violet-400"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8z"
-                      />
-                    </svg>
-                    Loading trends…
-                  </span>
-                </div>
-              ) : (
-                <TrendGraph data={trendData} />
-              )}
-            </motion.div>
-          </div>
-        ) : (
-          /* ── Results view ─────────────────────────────────── */
-          <div className="flex flex-col gap-6">
-            {/* Back button — top of results */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <button
-                onClick={handleReset}
-                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:text-white"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                <ArrowLeft size={14} />
-                New Check-in
-              </button>
-            </motion.div>
-            {response?.result && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                <CrashAlertBanner
-                  crashProbability={response.result.crashProbability}
-                  flags={response.result.flags}
-                />
-              </motion.div>
-            )}
-
-            {/* Score + Focus side by side */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              {response?.result && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.05 }}
-                >
-                  <ScoreCard result={response.result} />
-                </motion.div>
-              )}
-              {response?.result && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.12 }}
-                >
-                  <FocusModeCard minutes={response.result.focusMode} />
-                </motion.div>
-              )}
-            </div>
-
-            {/* AI plan + Trend */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              {response?.ai && response?.result && lastInput && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: 0.18 }}
-                >
-                  <ChatbotPanel
-                    ai={response.ai}
-                    context={{
-                      ...response.result,
-                      sleepHours: lastInput.sleepHours,
-                      studyHours: lastInput.studyHours,
-                      stressLevel: lastInput.stressLevel,
-                      deadlinesSoon: lastInput.deadlinesSoon,
-                      tasksPending: lastInput.tasksPending,
-                    }}
-                  />
-                </motion.div>
-              )}
-
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.24 }}
-              >
-                {trendLoading ? (
-                  <div
-                    className="flex h-48 items-center justify-center rounded-2xl text-sm text-slate-500"
-                    style={{
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px dashed rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    Loading trends…
-                  </div>
-                ) : (
-                  <TrendGraph data={trendData} />
-                )}
-              </motion.div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
+      {/* ── FOOTER ────────────────────────────────────────────────────── */}
       <footer
-        className="mt-16 py-6 text-center text-xs text-slate-600"
+        className="mt-4 py-10 text-center text-xs text-slate-600"
         style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
       >
-        Crashko — AI-powered burnout prediction for students.
+        <p className="text-sm font-semibold text-slate-500">Crashko</p>
+        <p className="mt-1">AI-powered burnout prediction for students.</p>
+        <div className="mt-4 flex items-center justify-center gap-5 text-slate-500">
+          <Link href="/legal" className="hover:text-slate-300">
+            Privacy Policy
+          </Link>
+          <Link href="/login" className="hover:text-slate-300">
+            Sign In
+          </Link>
+        </div>
+        <p className="mt-5">
+          © {new Date().getFullYear()} Crashko. All rights reserved.
+        </p>
       </footer>
     </div>
   );

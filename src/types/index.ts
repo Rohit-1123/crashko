@@ -8,6 +8,10 @@ export interface BurnoutInput {
   userId?: string;
 }
 
+export interface AnalyzeInput extends BurnoutInput {
+  aiConsent: true;
+}
+
 // ---------- Engine output ----------
 export interface BurnoutResult {
   score: number; // 0–100
@@ -32,6 +36,7 @@ export interface GroqAIResponse {
 export interface AnalyzeApiResponse {
   result: BurnoutResult;
   ai: GroqAIResponse;
+  logId?: string | null;
 }
 
 // ---------- Trend data ----------

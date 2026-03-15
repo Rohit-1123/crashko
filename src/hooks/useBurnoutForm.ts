@@ -1,26 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import type { BurnoutInput, AnalyzeApiResponse } from "@/types";
+import type { AnalyzeInput, BurnoutInput, AnalyzeApiResponse } from "@/types";
 
 interface UseBurnoutFormReturn {
   loading: boolean;
   error: string | null;
   response: AnalyzeApiResponse | null;
   submitted: boolean;
-  submitForm: (data: BurnoutInput) => Promise<void>;
+  submitForm: (data: AnalyzeInput) => Promise<AnalyzeApiResponse | null>;
   lastInput: BurnoutInput | null;
   reset: () => void;
 }
 
-export function useBurnoutForm(userId = "anon"): UseBurnoutFormReturn {
+export function useBurnoutForm(): UseBurnoutFormReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<AnalyzeApiResponse | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [lastInput, setLastInput] = useState<BurnoutInput | null>(null);
 
-  const submitForm = async (data: BurnoutInput) => {
+  const submitForm = async (data: AnalyzeInput) => {
     setLoading(true);
     setError(null);
 
@@ -28,7 +28,7 @@ export function useBurnoutForm(userId = "anon"): UseBurnoutFormReturn {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, userId }),
+        body: JSON.stringify(data),
       });
 
       if (!res.ok) {
@@ -38,10 +38,18 @@ export function useBurnoutForm(userId = "anon"): UseBurnoutFormReturn {
 
       const json: AnalyzeApiResponse = await res.json();
       setResponse(json);
-      setLastInput(data);
+      setLastInput({
+        sleepHours: data.sleepHours,
+        studyHours: data.studyHours,
+        stressLevel: data.stressLevel,
+        tasksPending: data.tasksPending,
+        deadlinesSoon: data.deadlinesSoon,
+      });
       setSubmitted(true);
+      return json;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
+      return null;
     } finally {
       setLoading(false);
     }

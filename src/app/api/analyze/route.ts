@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const userId = session.user.id;
 
     // Rate limit: 8 analyses per minute per user
-    if (!rateLimit(`analyze:${userId}`, 8, 60_000)) {
+    if (!(await rateLimit(`analyze:${userId}`, 8, 60_000))) {
       return NextResponse.json(
         { error: "Too many requests. Please wait a minute." },
         { status: 429 },
@@ -25,6 +25,13 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+
+    if (body?.aiConsent !== true) {
+      return NextResponse.json(
+        { error: "AI processing consent is required." },
+        { status: 400 },
+      );
+    }
 
     // Validate input (userId is read from session, not request body)
     const parsed = burnoutInputSchema.safeParse(body);
@@ -55,23 +62,6 @@ export async function POST(req: Request) {
       lastNdays: last7,
     });
 
-    // Persist log only when DB is available
-    if (db) {
-      await BurnoutLog.create({
-        userId,
-        sleepHours,
-        studyHours,
-        stressLevel,
-        tasksPending,
-        deadlinesSoon,
-        burnoutScore: result.score,
-        risk: result.risk,
-        flags: result.flags,
-        crashProbability: result.crashProbability,
-        focusMode: result.focusMode,
-      });
-    }
-
     // Call Groq LLM
     const ai = await callGroq({
       ...result,
@@ -82,7 +72,24 @@ export async function POST(req: Request) {
       tasksPending,
     });
 
-    return NextResponse.json({ result, ai });
+    const log = db
+      ? await BurnoutLog.create({
+          userId,
+          sleepHours,
+          studyHours,
+          stressLevel,
+          tasksPending,
+          deadlinesSoon,
+          burnoutScore: result.score,
+          risk: result.risk,
+          flags: result.flags,
+          crashProbability: result.crashProbability,
+          focusMode: result.focusMode,
+          ai,
+        })
+      : null;
+
+    return NextResponse.json({ result, ai, logId: log ? String(log._id) : null });
   } catch (err) {
     console.error("[analyze] Error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

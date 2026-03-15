@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import type { BurnoutInput } from "@/types";
+import Link from "next/link";
+import type { AnalyzeInput, BurnoutInput } from "@/types";
 import Tooltip from "@/components/Tooltip";
 import { Info } from "lucide-react";
 
 interface BurnoutFormProps {
-  onSubmit: (data: BurnoutInput) => void;
+  onSubmit: (data: AnalyzeInput) => void;
   loading: boolean;
 }
 
 const defaultValues: BurnoutInput = {
-  sleepHours:    7,
-  studyHours:    5,
-  stressLevel:   5,
-  tasksPending:  3,
+  sleepHours: 7,
+  studyHours: 5,
+  stressLevel: 5,
+  tasksPending: 3,
   deadlinesSoon: 0,
 };
 
@@ -27,16 +28,29 @@ const toRaw = (v: BurnoutInput): RawForm =>
 
 export default function BurnoutForm({ onSubmit, loading }: BurnoutFormProps) {
   const [form, setForm] = useState<BurnoutInput>(defaultValues);
-  const [raw,  setRaw]  = useState<RawForm>(toRaw(defaultValues));
-  const [errors, setErrors] = useState<Partial<Record<keyof BurnoutInput, string>>>({});
+  const [raw, setRaw] = useState<RawForm>(toRaw(defaultValues));
+  const [aiConsent, setAiConsent] = useState(false);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof BurnoutInput, string>>
+  >({});
+  const [consentError, setConsentError] = useState<string | null>(null);
 
   const validate = (): boolean => {
     const e: typeof errors = {};
-    if (isNaN(form.sleepHours)    || form.sleepHours < 0    || form.sleepHours > 24)   e.sleepHours    = "Enter a value between 0–24";
-    if (isNaN(form.studyHours)    || form.studyHours < 0    || form.studyHours > 24)   e.studyHours    = "Enter a value between 0–24";
-    if (isNaN(form.stressLevel)   || form.stressLevel < 1   || form.stressLevel > 10)  e.stressLevel   = "Enter a value between 1–10";
-    if (isNaN(form.tasksPending)  || form.tasksPending < 0)                             e.tasksPending  = "Cannot be negative";
-    if (isNaN(form.deadlinesSoon) || form.deadlinesSoon < 0)                           e.deadlinesSoon = "Cannot be negative";
+    if (isNaN(form.sleepHours) || form.sleepHours < 0 || form.sleepHours > 24)
+      e.sleepHours = "Enter a value between 0–24";
+    if (isNaN(form.studyHours) || form.studyHours < 0 || form.studyHours > 24)
+      e.studyHours = "Enter a value between 0–24";
+    if (
+      isNaN(form.stressLevel) ||
+      form.stressLevel < 1 ||
+      form.stressLevel > 10
+    )
+      e.stressLevel = "Enter a value between 1–10";
+    if (isNaN(form.tasksPending) || form.tasksPending < 0)
+      e.tasksPending = "Cannot be negative";
+    if (isNaN(form.deadlinesSoon) || form.deadlinesSoon < 0)
+      e.deadlinesSoon = "Cannot be negative";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -50,53 +64,80 @@ export default function BurnoutForm({ onSubmit, loading }: BurnoutFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) onSubmit(form);
+    if (!aiConsent) {
+      setConsentError("Please consent before generating an AI recovery plan.");
+      return;
+    }
+    if (validate()) {
+      setConsentError(null);
+      onSubmit({ ...form, aiConsent: true });
+    }
   };
 
   const fields: {
-    key:     keyof BurnoutInput;
-    label:   string;
-    min:     number;
-    max:     number;
-    step:    number;
-    unit:    string;
-    helper:  string;
+    key: keyof BurnoutInput;
+    label: string;
+    min: number;
+    max: number;
+    step: number;
+    unit: string;
+    helper: string;
     tooltip: string;
   }[] = [
     {
-      key:     "sleepHours",
-      label:   "Sleep Hours",
-      min: 0, max: 24, step: 0.5, unit: "hrs",
-      helper:  "How many hours did you sleep last night?",
-      tooltip: "Sleep is your primary burnout shield. Under 6 hours activates cortisol overload, degrading focus and emotional resilience. Consistently low sleep is the single strongest predictor of student burnout.",
+      key: "sleepHours",
+      label: "Sleep Hours",
+      min: 0,
+      max: 24,
+      step: 0.5,
+      unit: "hrs",
+      helper: "How many hours did you sleep last night?",
+      tooltip:
+        "Sleep is your primary burnout shield. Under 6 hours activates cortisol overload, degrading focus and emotional resilience. Consistently low sleep is the single strongest predictor of student burnout.",
     },
     {
-      key:     "studyHours",
-      label:   "Study Hours",
-      min: 0, max: 24, step: 0.5, unit: "hrs",
-      helper:  "Total hours spent studying today.",
-      tooltip: "Sustained cognitive effort without recovery builds mental fatigue. More than 6–8 study hours per day without breaks steeply escalates burnout risk. Quality beats quantity — your brain consolidates learning during rest.",
+      key: "studyHours",
+      label: "Study Hours",
+      min: 0,
+      max: 24,
+      step: 0.5,
+      unit: "hrs",
+      helper: "Total hours spent studying today.",
+      tooltip:
+        "Sustained cognitive effort without recovery builds mental fatigue. More than 6–8 study hours per day without breaks steeply escalates burnout risk. Quality beats quantity — your brain consolidates learning during rest.",
     },
     {
-      key:     "stressLevel",
-      label:   "Stress Level",
-      min: 1, max: 10, step: 1, unit: "/10",
-      helper:  "Rate your current stress (1 = calm, 10 = overwhelmed).",
-      tooltip: "Chronic high stress (7+) triggers prolonged cortisol release, reducing the hippocampus's capacity to form memories and regulate emotion. A score above 7 combined with low sleep is a crash accelerator.",
+      key: "stressLevel",
+      label: "Stress Level",
+      min: 1,
+      max: 10,
+      step: 1,
+      unit: "/10",
+      helper: "Rate your current stress (1 = calm, 10 = overwhelmed).",
+      tooltip:
+        "Chronic high stress (7+) triggers prolonged cortisol release, reducing the hippocampus's capacity to form memories and regulate emotion. A score above 7 combined with low sleep is a crash accelerator.",
     },
     {
-      key:     "tasksPending",
-      label:   "Pending Tasks",
-      min: 0, max: 100, step: 1, unit: "tasks",
-      helper:  "How many unfinished tasks do you have?",
-      tooltip: "An overloaded task queue creates constant low-grade anxiety — even when you're not actively working. Each unfinished task consumes background mental bandwidth, draining your cognitive reserve throughout the day.",
+      key: "tasksPending",
+      label: "Pending Tasks",
+      min: 0,
+      max: 100,
+      step: 1,
+      unit: "tasks",
+      helper: "How many unfinished tasks do you have?",
+      tooltip:
+        "An overloaded task queue creates constant low-grade anxiety — even when you're not actively working. Each unfinished task consumes background mental bandwidth, draining your cognitive reserve throughout the day.",
     },
     {
-      key:     "deadlinesSoon",
-      label:   "Deadlines within 48h",
-      min: 0, max: 20, step: 1, unit: "due",
-      helper:  "Assignments, exams, or submissions due within 48 hours.",
-      tooltip: "Imminent deadlines trigger the threat-response system, releasing adrenaline that impairs clear thinking and sleep. Multiple concurrent deadlines stack this effect, making them the most acute burnout trigger in the engine.",
+      key: "deadlinesSoon",
+      label: "Deadlines within 48h",
+      min: 0,
+      max: 20,
+      step: 1,
+      unit: "due",
+      helper: "Assignments, exams, or submissions due within 48 hours.",
+      tooltip:
+        "Imminent deadlines trigger the threat-response system, releasing adrenaline that impairs clear thinking and sleep. Multiple concurrent deadlines stack this effect, making them the most acute burnout trigger in the engine.",
     },
   ];
 
@@ -158,9 +199,7 @@ export default function BurnoutForm({ onSubmit, loading }: BurnoutFormProps) {
               value={raw[key]}
               onChange={(e) => handleChange(key, e.target.value)}
               className={`w-full rounded-xl px-3 py-2.5 text-sm text-slate-100 outline-none transition-all focus:ring-2 ${
-                errors[key]
-                  ? "focus:ring-red-400"
-                  : "focus:ring-violet-500/50"
+                errors[key] ? "focus:ring-red-400" : "focus:ring-violet-500/50"
               }`}
               style={{
                 background: errors[key]
@@ -181,6 +220,40 @@ export default function BurnoutForm({ onSubmit, loading }: BurnoutFormProps) {
         ))}
       </div>
 
+      <div
+        className="mt-5 rounded-xl px-3 py-2.5"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.09)",
+        }}
+      >
+        <label className="flex items-start gap-2.5 text-xs leading-relaxed text-slate-400">
+          <input
+            type="checkbox"
+            checked={aiConsent}
+            onChange={(e) => {
+              setAiConsent(e.target.checked);
+              if (e.target.checked) setConsentError(null);
+            }}
+            className="mt-0.5 h-4 w-4 rounded border-slate-500 bg-transparent"
+          />
+          <span>
+            I consent to sending this check-in data to our AI provider for
+            generating a recovery plan. Read our{" "}
+            <Link
+              href="/legal"
+              className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+        {consentError && (
+          <p className="mt-2 text-xs text-red-400">{consentError}</p>
+        )}
+      </div>
+
       <button
         type="submit"
         disabled={loading}
@@ -193,9 +266,24 @@ export default function BurnoutForm({ onSubmit, loading }: BurnoutFormProps) {
       >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            <svg
+              className="h-4 w-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              />
             </svg>
             Analyzing…
           </span>

@@ -2,14 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { LayoutDashboard, TrendingUp, Clock, Trash2 } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "/",        label: "Dashboard", desc: "Log your day and get score",     Icon: LayoutDashboard },
-  { href: "/trends",  label: "Trends",    desc: "Charts and stat summaries",      Icon: TrendingUp      },
-  { href: "/history", label: "History",   desc: "All your past burnout logs",     Icon: Clock           },
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    desc: "Log your day and get score",
+    Icon: LayoutDashboard,
+  },
+  {
+    href: "/trends",
+    label: "Trends",
+    desc: "Charts and stat summaries",
+    Icon: TrendingUp,
+  },
+  {
+    href: "/history",
+    label: "History",
+    desc: "All your past burnout logs",
+    Icon: Clock,
+  },
 ];
 
 function GlassSection({
@@ -18,10 +34,10 @@ function GlassSection({
   danger,
   delay = 0,
 }: {
-  title:    string;
+  title: string;
   children: React.ReactNode;
-  danger?:  boolean;
-  delay?:   number;
+  danger?: boolean;
+  delay?: number;
 }) {
   return (
     <motion.div
@@ -30,8 +46,8 @@ function GlassSection({
       transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
       className="rounded-2xl p-6"
       style={{
-        background:           "rgba(255,255,255,0.04)",
-        backdropFilter:       "blur(20px)",
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: danger
           ? "1px solid rgba(239,68,68,0.25)"
@@ -55,7 +71,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       className="rounded-xl px-4 py-3"
       style={{
         background: "rgba(255,255,255,0.04)",
-        border:     "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
       <p className="text-xs text-slate-500">{label}</p>
@@ -67,14 +83,16 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [clearing, setClearing] = useState(false);
-  const [cleared,  setCleared]  = useState(false);
+  const [cleared, setCleared] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     localStorage.removeItem("crashko_user_id");
   }, []);
 
   const handleClearData = async () => {
-    if (!confirm("Delete ALL your burnout logs? This cannot be undone.")) return;
+    if (!confirm("Delete ALL your burnout logs? This cannot be undone."))
+      return;
     setClearing(true);
     try {
       await fetch("/api/history", { method: "DELETE" });
@@ -87,10 +105,30 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (
+      !confirm(
+        "Delete your account and all burnout logs? This cannot be undone.",
+      )
+    )
+      return;
+    setDeletingAccount(true);
+    try {
+      const res = await fetch("/api/account", { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Failed to delete account");
+      }
+      await signOut({ callbackUrl: "/" });
+    } catch {
+      // silently ignore
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   return (
     <div className="flex-1">
       <main className="mx-auto max-w-2xl px-4 py-10">
-        {/* Page header */}
         <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: 12 }}
@@ -114,12 +152,11 @@ export default function SettingsPage() {
         </motion.div>
 
         <div className="flex flex-col gap-5">
-          {/* Account */}
           <GlassSection title="Account" delay={0.05}>
             <div className="flex flex-col gap-3">
               {session?.user ? (
                 <>
-                  <InfoRow label="Name"  value={session.user.name  ?? "—"} />
+                  <InfoRow label="Name" value={session.user.name ?? "—"} />
                   <InfoRow label="Email" value={session.user.email ?? "—"} />
                 </>
               ) : (
@@ -128,7 +165,6 @@ export default function SettingsPage() {
             </div>
           </GlassSection>
 
-          {/* Navigation */}
           <GlassSection title="Navigation" delay={0.12}>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {NAV_LINKS.map(({ href, label, desc, Icon }) => (
@@ -138,7 +174,7 @@ export default function SettingsPage() {
                   className="flex flex-col gap-2 rounded-xl p-4 transition-all hover:border-violet-500/30"
                   style={{
                     background: "rgba(255,255,255,0.04)",
-                    border:     "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.08)",
                   }}
                 >
                   <Icon size={18} className="text-violet-400" />
@@ -151,10 +187,10 @@ export default function SettingsPage() {
             </div>
           </GlassSection>
 
-          {/* Danger zone */}
-          <GlassSection title="Danger Zone" danger delay={0.20}>
+          <GlassSection title="Danger Zone" danger delay={0.2}>
             <p className="mb-4 text-sm text-slate-500 leading-relaxed">
-              Permanently delete all your burnout logs. This action cannot be undone.
+              Permanently delete all your burnout logs. This action cannot be
+              undone.
             </p>
             <button
               type="button"
@@ -163,11 +199,29 @@ export default function SettingsPage() {
               className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-red-400 transition-all hover:opacity-90 disabled:opacity-50"
               style={{
                 background: "rgba(239,68,68,0.08)",
-                border:     "1px solid rgba(239,68,68,0.2)",
+                border: "1px solid rgba(239,68,68,0.2)",
               }}
             >
               <Trash2 size={14} />
-              {clearing ? "Deleting…" : cleared ? "All logs deleted" : "Delete All My Logs"}
+              {clearing
+                ? "Deleting…"
+                : cleared
+                  ? "All logs deleted"
+                  : "Delete All My Logs"}
+            </button>
+
+            <button
+              type="button"
+              disabled={deletingAccount}
+              onClick={handleDeleteAccount}
+              className="mt-3 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-red-300 transition-all hover:opacity-90 disabled:opacity-50"
+              style={{
+                background: "rgba(239,68,68,0.14)",
+                border: "1px solid rgba(239,68,68,0.28)",
+              }}
+            >
+              <Trash2 size={14} />
+              {deletingAccount ? "Deleting Account…" : "Delete My Account"}
             </button>
           </GlassSection>
         </div>

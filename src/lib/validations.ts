@@ -28,5 +28,19 @@ export const burnoutInputSchema = z.object({
   // userId is intentionally excluded — always read from the authenticated session server-side
 });
 
+export const groqCallInputSchema = z.object({
+  score: z.number().min(0).max(100),
+  risk: z.enum(["Safe", "At Risk", "High Risk"]),
+  flags: z.array(z.string()),
+  crashProbability: z.number().min(0).max(100),
+  focusMode: z.number().min(15).max(90),
+  sleepHours: z.number().min(0).max(24),
+  studyHours: z.number().min(0).max(24),
+  stressLevel: z.number().min(1).max(10),
+  deadlinesSoon: z.number().min(0).max(20),
+  tasksPending: z.number().min(0).max(100),
+});
+
 
 export type BurnoutInputSchema = z.infer<typeof burnoutInputSchema>;
+export type GroqCallInputSchema = z.infer<typeof groqCallInputSchema>;

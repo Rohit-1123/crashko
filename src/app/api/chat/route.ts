@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { callGroq } from "@/lib/groqClient";
 import type { GroqCallInput } from "@/lib/groqClient";
 import { rateLimit } from "@/lib/rateLimit";
+import { groqCallInputSchema } from "@/lib/validations";
 
 /**
  * POST /api/chat
@@ -18,18 +19,22 @@ export async function POST(req: Request) {
     }
 
     // Rate limit: 15 regenerations per minute per user
-    if (!rateLimit(`chat:${session.user.id}`, 15, 60_000)) {
+    if (!(await rateLimit(`chat:${session.user.id}`, 15, 60_000))) {
       return NextResponse.json(
         { error: "Too many requests. Please wait a minute." },
         { status: 429 },
       );
     }
 
-    const body: GroqCallInput = await req.json();
-
-    if (typeof body.score !== "number") {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    const parsed = groqCallInputSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation failed", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+
+    const body: GroqCallInput = parsed.data;
 
     const ai = await callGroq(body);
     return NextResponse.json({ ai });

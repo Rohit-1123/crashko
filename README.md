@@ -17,6 +17,7 @@ AI-powered burnout prediction and recovery assistant for students. Log your dail
 - [Burnout Engine](#burnout-engine)
 - [Authentication](#authentication)
 - [Database](#database)
+- [Data Lifecycle](#data-lifecycle)
 - [Security](#security)
 - [Observability](#observability)
 - [Deployment](#deployment)
@@ -72,7 +73,9 @@ Crashko helps engineering students monitor and prevent burnout. Each check-in ca
 src/
   app/
     layout.tsx              # Root layout — fonts, providers, Analytics, SpeedInsights
-    page.tsx                # Dashboard — check-in form, score card, chat, trends
+    page.tsx                # Public landing page
+    legal/page.tsx          # Unified legal page (privacy + terms)
+    dashboard/page.tsx      # Authenticated dashboard — check-in + analysis
     globals.css
     api/
       analyze/route.ts      # POST  /api/analyze  — compute burnout + call Groq
@@ -140,6 +143,10 @@ GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
 
 # Groq
 GROQ_API_KEY=<from console.groq.com>
+
+# Optional: Upstash Redis (production-grade distributed rate limiting)
+UPSTASH_REDIS_REST_URL=<from upstash console>
+UPSTASH_REDIS_REST_TOKEN=<from upstash console>
 ```
 
 **Never commit `.env.local` to version control.**
@@ -303,6 +310,7 @@ Google OAuth via NextAuth.js. JWT session strategy — no database sessions requ
 - `session.user.id` is populated from `token.sub` (Google subject ID)
 - All API routes verify the session server-side via `getServerSession(authOptions)` — the `userId` is never accepted from request bodies
 - Unauthenticated requests to protected pages are redirected to `/login` by the NextAuth middleware in `src/proxy.ts`
+- The root route (`/`) is public; the app dashboard lives at `/dashboard`
 - Authenticated users visiting `/login` or `/signup` are redirected to the dashboard
 
 ---
@@ -318,6 +326,18 @@ MongoDB with Mongoose. Connection is cached on the module level to avoid creatin
 **Indexes:** `userId` (single), `createdAt` (single), `{ userId, createdAt: -1 }` (compound for per-user time-series queries).
 
 All API routes degrade gracefully when the database is unavailable — score computation and AI generation continue, but logs are not persisted.
+
+---
+
+## Data Lifecycle
+
+- Collection: Crashko collects daily check-in fields (`sleepHours`, `studyHours`, `stressLevel`, `tasksPending`, `deadlinesSoon`) and Google profile fields (`email`, `name`, `image`) during sign-in.
+- Validation: API routes validate all user input using Zod before processing.
+- Processing: The burnout engine computes score, risk, flags, crash probability, and recommended focus mode.
+- AI usage: Check-in context is sent to Groq only when the user gives explicit consent during submission.
+- Storage: Burnout logs are stored in MongoDB and scoped by authenticated `userId`.
+- Retention: Burnout logs include a TTL expiry (`expiresAt`) set to 365 days by default.
+- User controls: Users can delete all burnout logs or delete their entire account from Settings.
 
 ---
 

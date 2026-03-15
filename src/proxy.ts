@@ -3,25 +3,26 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    // If authenticated user visits /login or /signup, redirect to dashboard
     const isAuthPage =
       req.nextUrl.pathname.startsWith("/login") ||
       req.nextUrl.pathname.startsWith("/signup");
+    const isPublicLanding = req.nextUrl.pathname === "/";
 
-    if (req.nextauth.token && isAuthPage) {
-      return NextResponse.redirect(new URL("/", req.url));
+    if (req.nextauth.token && (isAuthPage || isPublicLanding)) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      // Let unauthenticated users through to /login and /signup
       authorized: ({ token, req }) => {
         const isAuthPage =
           req.nextUrl.pathname.startsWith("/login") ||
           req.nextUrl.pathname.startsWith("/signup");
-        if (isAuthPage) return true;
+        const isPublicLanding = req.nextUrl.pathname === "/";
+
+        if (isAuthPage || isPublicLanding) return true;
         return !!token;
       },
     },
@@ -31,10 +32,10 @@ export default withAuth(
   },
 );
 
-// Protect app pages, allow auth pages and Next.js internals through
 export const config = {
   matcher: [
     "/",
+    "/dashboard/:path*",
     "/trends",
     "/history",
     "/settings",

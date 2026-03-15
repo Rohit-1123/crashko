@@ -1,4 +1,5 @@
 import mongoose, { type Document, type Model } from "mongoose";
+import type { GroqAIResponse } from "@/types";
 
 export interface IBurnoutLog extends Document {
   userId: string;
@@ -12,7 +13,9 @@ export interface IBurnoutLog extends Document {
   flags: string[];
   crashProbability: number;
   focusMode: number;
+  ai?: GroqAIResponse;
   createdAt: Date;
+  expiresAt: Date;
 }
 
 const BurnoutLogSchema = new mongoose.Schema<IBurnoutLog>({
@@ -27,7 +30,21 @@ const BurnoutLogSchema = new mongoose.Schema<IBurnoutLog>({
   flags: { type: [String], default: [] },
   crashProbability: { type: Number, required: true },
   focusMode: { type: Number, required: true },
+  ai: {
+    shortDiagnosis: { type: String },
+    recoveryPlan: { type: [String], default: undefined },
+    studyRestructuring: { type: String },
+    oneMotivationalLine: { type: String },
+    recommendedPomodoroMinutes: { type: Number },
+    tags: { type: [String], default: undefined },
+    raw: { type: String },
+  },
   createdAt: { type: Date, default: Date.now, index: true },
+  expiresAt: {
+    type: Date,
+    default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    index: { expires: 0 },
+  },
 });
 
 // Compound index for per-user time-series queries
